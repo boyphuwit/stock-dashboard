@@ -1,461 +1,233 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stock Dashboard — boyphuwit</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #010409; color: #e6edf3; font-family: 'Courier New', monospace; min-height: 100vh; }
-
-  /* NAV */
-  nav { background: #0d1117; border-bottom: 1px solid #21262d; padding: 0 24px; display: flex; align-items: center; gap: 0; position: sticky; top: 0; z-index: 100; }
-  .nav-brand { font-size: 15px; font-weight: 600; color: #f0f6fc; padding: 14px 0; margin-right: 24px; display: flex; align-items: center; gap: 8px; }
-  .nav-brand span { color: #3fb950; }
-  .nav-tab { padding: 14px 16px; font-size: 13px; color: #8b949e; cursor: pointer; border-bottom: 2px solid transparent; transition: all .2s; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }
-  .nav-tab:hover { color: #e6edf3; }
-  .nav-tab.active { color: #f0f6fc; border-bottom-color: #f78166; }
-  .nav-right { margin-left: auto; font-size: 11px; color: #8b949e; }
-  .live-dot { display: inline-block; width: 6px; height: 6px; background: #3fb950; border-radius: 50%; margin-right: 5px; animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-
-  /* LAYOUT */
-  .page { display: none; padding: 24px; max-width: 1100px; margin: 0 auto; }
-  .page.active { display: block; }
-
-  /* SECTION HEADERS */
-  .sec-title { font-size: 13px; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-  .sec-title::after { content: ''; flex: 1; height: 1px; background: #21262d; }
-
-  /* CARDS GRID */
-  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-  .metric-card { background: #161b22; border: 0.5px solid #30363d; border-radius: 8px; padding: 14px; }
-  .metric-label { font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-  .metric-val { font-size: 20px; font-weight: 600; color: #e6edf3; }
-  .metric-sub { font-size: 11px; margin-top: 3px; }
-  .green { color: #3fb950; }
-  .red { color: #f85149; }
-  .yellow { color: #d29922; }
-  .blue { color: #58a6ff; }
-
-  /* CHART BOXES */
-  .chart-box { background: #161b22; border: 0.5px solid #30363d; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-  .chart-label { font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
-
-  /* TWO COL */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
-
-  /* SIGNAL TABLE */
-  .sig-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 0.5px solid #21262d; font-size: 12px; }
-  .sig-row:last-child { border-bottom: none; }
-  .sig-name { color: #8b949e; }
-  .sig-val { font-weight: 500; }
-
-  /* ANALYST BAR */
-  .abar { margin: 8px 0; }
-  .abar-hdr { display: flex; justify-content: space-between; font-size: 11px; color: #8b949e; margin-bottom: 3px; }
-  .abar-bg { background: #21262d; border-radius: 3px; height: 7px; overflow: hidden; }
-  .abar-fill { height: 100%; border-radius: 3px; }
-
-  /* STOCK PICKS TABLE */
-  .picks-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .picks-table th { text-align: left; padding: 8px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: #8b949e; border-bottom: 1px solid #21262d; font-weight: 500; }
-  .picks-table td { padding: 12px; border-bottom: 0.5px solid #21262d; vertical-align: middle; }
-  .picks-table tr:last-child td { border-bottom: none; }
-  .picks-table tr:hover td { background: #1c2128; }
-  .ticker-badge { font-size: 14px; font-weight: 600; color: #f0f6fc; letter-spacing: .5px; }
-  .company-name { font-size: 11px; color: #8b949e; margin-top: 2px; }
-  .tag { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500; margin: 2px 2px 0 0; }
-  .tag-g { background: #0d2b1a; color: #3fb950; border: 0.5px solid #238636; }
-  .tag-y { background: #2b2200; color: #d29922; border: 0.5px solid #9e6a03; }
-  .tag-b { background: #031d36; color: #58a6ff; border: 0.5px solid #1f6feb; }
-  .tag-r { background: #2d0f0f; color: #f85149; border: 0.5px solid #6e2020; }
-  .rating-pill { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
-  .r-buy { background: #0d2b1a; color: #3fb950; }
-  .r-hold { background: #2b2200; color: #d29922; }
-
-  /* SECTOR BARS */
-  .sector-item { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 12px; }
-  .sector-name { color: #8b949e; min-width: 120px; }
-  .sector-bar-bg { flex: 1; background: #21262d; border-radius: 3px; height: 6px; overflow: hidden; }
-  .sector-bar-fill { height: 100%; border-radius: 3px; }
-  .sector-status { min-width: 90px; text-align: right; font-size: 11px; }
-
-  /* DISCLAIMER */
-  .disclaimer { background: #0d2b1a; border: 0.5px solid #238636; border-radius: 8px; padding: 12px 16px; font-size: 11px; color: #8b949e; line-height: 1.7; margin-top: 20px; }
-
-  /* FOOTER */
-  footer { text-align: center; padding: 24px; font-size: 11px; color: #484f58; border-top: 1px solid #21262d; margin-top: 20px; }
-
-  @media (max-width: 700px) {
-    .metrics { grid-template-columns: repeat(2, 1fr); }
-    .two-col { grid-template-columns: 1fr; }
-    nav { overflow-x: auto; }
-  }
+*{box-sizing:border-box;margin:0;padding:0}
+.w{background:#0d1117;border-radius:12px;padding:20px;font-family:var(--font-mono,monospace);color:#e6edf3}
+.hdr{border-bottom:1px solid #21262d;padding-bottom:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.htitle{font-size:18px;font-weight:500;color:#f0f6fc}
+.hdate{font-size:12px;color:#8b949e;background:#161b22;padding:4px 10px;border-radius:6px;border:0.5px solid #30363d}
+.legend{display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:6px;font-size:11px;color:#8b949e}
+.dot{width:8px;height:8px;border-radius:50%}
+.cards{display:flex;flex-direction:column;gap:10px}
+.card{background:#161b22;border:0.5px solid #30363d;border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
+.card:hover{border-color:#58a6ff;transition:border-color .2s}
+.rank{font-size:20px;font-weight:500;color:#30363d;min-width:28px;text-align:center}
+.info{}
+.ticker-row{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.ticker{font-size:15px;font-weight:500;color:#f0f6fc;letter-spacing:.5px}
+.sector{font-size:10px;color:#8b949e;background:#21262d;padding:2px 7px;border-radius:4px}
+.name{font-size:11px;color:#8b949e;margin-bottom:5px}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500}
+.t-bull{background:#0d2b1a;color:#3fb950;border:0.5px solid #238636}
+.t-warn{background:#2b2200;color:#d29922;border:0.5px solid #9e6a03}
+.t-info{background:#031d36;color:#58a6ff;border:0.5px solid #1f6feb}
+.t-red{background:#2d0f0f;color:#f85149;border:0.5px solid #6e2020}
+.right{text-align:right;min-width:110px}
+.price{font-size:16px;font-weight:500;color:#e6edf3;margin-bottom:3px}
+.upside{font-size:13px;font-weight:500}
+.up{color:#3fb950}
+.dn{color:#f85149}
+.rating{font-size:10px;color:#8b949e;margin-top:2px}
+.chart-sec{margin-top:18px;background:#161b22;border:0.5px solid #30363d;border-radius:10px;padding:14px}
+.chart-title{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.footer-note{margin-top:12px;padding:10px 12px;background:#0d2b1a;border:0.5px solid #238636;border-radius:8px;font-size:11px;color:#8b949e;line-height:1.7}
+.sector-bar{margin-bottom:16px}
+.sbar-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;font-size:12px}
+.sbar-name{color:#8b949e;min-width:90px}
+.sbar-bg{flex:1;background:#21262d;border-radius:3px;height:6px;overflow:hidden}
+.sbar-fill{height:100%;border-radius:3px}
+.sbar-val{color:#e6edf3;min-width:45px;text-align:right}
+.divider{height:0.5px;background:#21262d;margin:14px 0}
 </style>
-</head>
-<body>
-
-<nav>
-  <div class="nav-brand">📊 <span>Stock</span>Dashboard</div>
-  <button class="nav-tab active" onclick="switchTab('aapl')">AAPL Analysis</button>
-  <button class="nav-tab" onclick="switchTab('weekly')">Weekly Picks</button>
-  <div class="nav-right"><span class="live-dot"></span>25 มิ.ย. 2026</div>
-</nav>
-
-<!-- ===================== AAPL PAGE ===================== -->
-<div id="page-aapl" class="page active">
-
-  <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:20px;padding-top:4px">
-    <div>
-      <div style="font-size:24px;font-weight:600;color:#f0f6fc">AAPL &nbsp;<span style="font-size:14px;color:#8b949e">Apple Inc. · NASDAQ</span></div>
-      <div style="font-size:13px;color:#8b949e;margin-top:2px">อัปเดต 25 มิ.ย. 2026 &nbsp;·&nbsp; 52W: $196.86 — $317.40</div>
-    </div>
-    <div style="margin-left:auto;text-align:right">
-      <div style="font-size:32px;font-weight:600;color:#3fb950">$297.87</div>
-      <div style="font-size:14px;color:#3fb950">▲ +0.38% วันนี้</div>
-    </div>
+<div class="w">
+  <h2 class="sr-only" style="position:absolute;left:-9999px">หุ้นน่าสนใจประจำสัปดาห์ 25 มิถุนายน 2026</h2>
+  <div class="hdr">
+    <div class="htitle">📋 หุ้นน่าสนใจประจำสัปดาห์</div>
+    <div class="hdate">สัปดาห์ 23–27 มิ.ย. 2026</div>
   </div>
 
-  <div class="metrics">
-    <div class="metric-card">
-      <div class="metric-label">Market Cap</div>
-      <div class="metric-val">$4.47T</div>
-      <div class="metric-sub" style="color:#8b949e">Mega-cap</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">P/E Ratio</div>
-      <div class="metric-val">37.2x</div>
-      <div class="metric-sub yellow">Premium</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Revenue Q2 FY26</div>
-      <div class="metric-val">$111.2B</div>
-      <div class="metric-sub green">+12.8% YoY</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Services Rev.</div>
-      <div class="metric-val">$31B</div>
-      <div class="metric-sub green">All-time High</div>
-    </div>
+  <div class="legend">
+    <div class="leg"><div class="dot" style="background:#3fb950"></div>Strong Buy</div>
+    <div class="leg"><div class="dot" style="background:#d29922"></div>Buy / Hold</div>
+    <div class="leg"><div class="dot" style="background:#f85149"></div>ความเสี่ยงสูง</div>
+    <div class="leg"><div class="dot" style="background:#58a6ff"></div>Catalyst สำคัญ</div>
   </div>
 
-  <div class="chart-box">
-    <div class="chart-label">ราคา AAPL — มิ.ย. 2026</div>
-    <div style="position:relative;height:220px">
-      <canvas id="aaplPriceChart" aria-label="AAPL price chart June 2026">ราคา AAPL ช่วง $287–316</canvas>
-    </div>
-  </div>
+  <div class="cards">
 
-  <div class="two-col">
-    <div class="chart-box" style="margin-bottom:0">
-      <div class="chart-label">Technical Indicators</div>
-      <div class="sig-row"><span class="sig-name">RSI (14)</span><span class="sig-val yellow">52.83 · Neutral</span></div>
-      <div class="sig-row"><span class="sig-name">MA 50</span><span class="sig-val">$297.55</span></div>
-      <div class="sig-row"><span class="sig-name">MA 200</span><span class="sig-val">$294.81</span></div>
-      <div class="sig-row"><span class="sig-name">Support</span><span class="sig-val red">$294.81</span></div>
-      <div class="sig-row"><span class="sig-name">Resistance</span><span class="sig-val red">$299.24</span></div>
-      <div class="sig-row"><span class="sig-name">Sentiment</span><span class="sig-val green">Bullish 62%</span></div>
-      <div class="sig-row"><span class="sig-name">VIX</span><span class="sig-val green">17.68 (ลดลง)</span></div>
-    </div>
-
-    <div class="chart-box" style="margin-bottom:0">
-      <div class="chart-label">Analyst Consensus (48 คน)</div>
-      <div style="margin-bottom:12px;display:flex;align-items:center;gap:8px">
-        <span style="background:#0d2b1a;color:#3fb950;border:0.5px solid #238636;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600">BUY</span>
-        <span style="font-size:12px;color:#8b949e">เป้าหมาย $313.62</span>
+    <div class="card" style="border-left:3px solid #3fb950">
+      <div class="rank" style="color:#3fb950">01</div>
+      <div class="info">
+        <div class="ticker-row">
+          <span class="ticker">MU</span>
+          <span class="sector">Semiconductor</span>
+          <div class="dot" style="background:#3fb950"></div>
+        </div>
+        <div class="name">Micron Technology — AI Memory Supercycle</div>
+        <div class="tags">
+          <span class="tag t-bull">Strong Buy 43 คน</span>
+          <span class="tag t-info">Q3 Earnings Beat เพิ่งรายงาน</span>
+          <span class="tag t-info">ดีล Anthropic</span>
+        </div>
       </div>
-      <div class="abar">
-        <div class="abar-hdr"><span>Buy</span><span class="green">65%</span></div>
-        <div class="abar-bg"><div class="abar-fill" style="width:65%;background:#3fb950"></div></div>
-      </div>
-      <div class="abar">
-        <div class="abar-hdr"><span>Hold</span><span class="yellow">27%</span></div>
-        <div class="abar-bg"><div class="abar-fill" style="width:27%;background:#d29922"></div></div>
-      </div>
-      <div class="abar">
-        <div class="abar-hdr"><span>Sell</span><span class="red">8%</span></div>
-        <div class="abar-bg"><div class="abar-fill" style="width:8%;background:#f85149"></div></div>
-      </div>
-      <div style="margin-top:14px;font-size:11px;color:#8b949e;line-height:1.8">
-        Bull target: <span class="green">$417</span><br>
-        Bear target: <span class="red">$250</span><br>
-        Upside จากปัจจุบัน: <span style="color:#e6edf3">+5.2%</span>
+      <div class="right">
+        <div class="price">~$1,050</div>
+        <div class="upside up">▲ Upside +28%</div>
+        <div class="rating">Target: $1,300+</div>
       </div>
     </div>
+
+    <div class="card" style="border-left:3px solid #3fb950">
+      <div class="rank" style="color:#3fb950">02</div>
+      <div class="info">
+        <div class="ticker-row">
+          <span class="ticker">NVDA</span>
+          <span class="sector">AI Chips</span>
+          <div class="dot" style="background:#3fb950"></div>
+        </div>
+        <div class="name">NVIDIA — Data Center AI Infrastructure</div>
+        <div class="tags">
+          <span class="tag t-bull">Strong Buy 62 คน</span>
+          <span class="tag t-info">Revenue +65% YoY FY26</span>
+          <span class="tag t-warn">Pullback จาก Selloff</span>
+        </div>
+      </div>
+      <div class="right">
+        <div class="price">~$199</div>
+        <div class="upside up">▲ Upside +50%</div>
+        <div class="rating">Target: $299</div>
+      </div>
+    </div>
+
+    <div class="card" style="border-left:3px solid #3fb950">
+      <div class="rank" style="color:#3fb950">03</div>
+      <div class="info">
+        <div class="ticker-row">
+          <span class="ticker">CRWD</span>
+          <span class="sector">Cybersecurity</span>
+          <div class="dot" style="background:#3fb950"></div>
+        </div>
+        <div class="name">CrowdStrike — ผู้นำ Cloud Security</div>
+        <div class="tags">
+          <span class="tag t-bull">Strong Buy</span>
+          <span class="tag t-info">Stock Split 4:1 วันที่ 2 ก.ค.</span>
+          <span class="tag t-warn">Valuation สูง 137x</span>
+        </div>
+      </div>
+      <div class="right">
+        <div class="price">~$680</div>
+        <div class="upside up">▲ Target $825</div>
+        <div class="rating">ARR $5.5B+</div>
+      </div>
+    </div>
+
+    <div class="card" style="border-left:3px solid #58a6ff">
+      <div class="rank" style="color:#58a6ff">04</div>
+      <div class="info">
+        <div class="ticker-row">
+          <span class="ticker">ISRG</span>
+          <span class="sector">Medical Devices</span>
+          <div class="dot" style="background:#58a6ff"></div>
+        </div>
+        <div class="name">Intuitive Surgical — หุ่นยนต์ผ่าตัด da Vinci</div>
+        <div class="tags">
+          <span class="tag t-bull">Buy</span>
+          <span class="tag t-info">Revenue +23% Q1 2026</span>
+          <span class="tag t-info">Market Share 80%</span>
+        </div>
+      </div>
+      <div class="right">
+        <div class="price">~$403</div>
+        <div class="upside up">▲ Defensive Growth</div>
+        <div class="rating">52W: $425–616</div>
+      </div>
+    </div>
+
+    <div class="card" style="border-left:3px solid #d29922">
+      <div class="rank" style="color:#d29922">05</div>
+      <div class="info">
+        <div class="ticker-row">
+          <span class="ticker">LULU</span>
+          <span class="sector">Consumer</span>
+          <div class="dot" style="background:#d29922"></div>
+        </div>
+        <div class="name">Lululemon — Beaten-Down Value Play</div>
+        <div class="tags">
+          <span class="tag t-warn">Hold Consensus</span>
+          <span class="tag t-red">ลง 50% ใน 6 เดือน</span>
+          <span class="tag t-bull">P/E ถูก ~9.5x</span>
+        </div>
+      </div>
+      <div class="right">
+        <div class="price">~$173</div>
+        <div class="upside up">▲ Upside +19%</div>
+        <div class="rating">Target: $133–149</div>
+      </div>
+    </div>
+
   </div>
 
-  <div style="margin-top:16px" class="chart-box">
-    <div class="chart-label">Revenue Breakdown Q2 FY2026 (พันล้าน USD)</div>
-    <div style="position:relative;height:180px">
-      <canvas id="aaplRevChart" aria-label="AAPL revenue by segment">iPhone $67.7B, Services $31B, Mac $8.4B, iPad $8.1B, Wearables $5.9B</canvas>
-    </div>
-  </div>
+  <div class="divider"></div>
 
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px">
-    <div class="metric-card" style="text-align:center">
-      <div class="metric-label">CEO ใหม่</div>
-      <div style="font-size:14px;font-weight:600;color:#d29922;margin:4px 0">John Ternus</div>
-      <div style="font-size:10px;color:#8b949e">มีผล 1 ก.ย. 2026</div>
-    </div>
-    <div class="metric-card" style="text-align:center">
-      <div class="metric-label">Buyback Program</div>
-      <div style="font-size:18px;font-weight:600;color:#3fb950;margin:4px 0">$100B</div>
-      <div style="font-size:10px;color:#8b949e">ประกาศ พ.ค. 2026</div>
-    </div>
-    <div class="metric-card" style="text-align:center">
-      <div class="metric-label">5,000 บาท ซื้อได้</div>
-      <div style="font-size:18px;font-weight:600;color:#58a6ff;margin:4px 0">~0.48 หุ้น</div>
-      <div style="font-size:10px;color:#8b949e">ต้องใช้ Fractional Shares</div>
-    </div>
-  </div>
-
-  <div class="disclaimer">
-    ⚠️ ข้อมูลนี้เพื่อการศึกษาเท่านั้น ไม่ใช่คำแนะนำในการลงทุน · ราคา ณ 25 มิ.ย. 2026 · อัตราแลกเปลี่ยน ~35 บาท/USD
-  </div>
-</div>
-
-<!-- ===================== WEEKLY PAGE ===================== -->
-<div id="page-weekly" class="page">
-
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-top:4px">
-    <div>
-      <div style="font-size:20px;font-weight:600;color:#f0f6fc">หุ้นน่าสนใจประจำสัปดาห์</div>
-      <div style="font-size:12px;color:#8b949e;margin-top:3px">สัปดาห์ 23–27 มิ.ย. 2026 · คัดจาก Analyst Consensus</div>
-    </div>
-    <div style="background:#161b22;border:0.5px solid #30363d;border-radius:8px;padding:8px 14px;font-size:12px;color:#3fb950">
-      S&P 500 ▲ 27% YoY
-    </div>
-  </div>
-
-  <div class="chart-box">
-    <div class="chart-label">Upside Potential vs Analyst Target (%)</div>
+  <div class="chart-sec">
+    <div class="chart-title">Upside Potential vs ราคาปัจจุบัน (Analyst Consensus Target)</div>
     <div style="position:relative;height:200px">
-      <canvas id="upsideChart" aria-label="Upside potential bar chart">MU +28%, NVDA +50%, CRWD +21%, ISRG +15%, LULU +19%</canvas>
+      <canvas id="upsideChart" role="img" aria-label="Bar chart upside potential for MU NVDA CRWD ISRG LULU">MU +28%, NVDA +50%, CRWD +21%, ISRG +15%, LULU +19%</canvas>
     </div>
   </div>
 
-  <div class="sec-title" style="margin-bottom:12px">รายชื่อหุ้น</div>
+  <div class="divider"></div>
 
-  <div style="background:#161b22;border:0.5px solid #30363d;border-radius:10px;overflow:hidden;margin-bottom:16px">
-    <table class="picks-table">
-      <thead>
-        <tr style="background:#0d1117">
-          <th>#</th>
-          <th>หุ้น</th>
-          <th>ราคา</th>
-          <th>Target</th>
-          <th>Upside</th>
-          <th>Rating</th>
-          <th>ธีม</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td style="color:#3fb950;font-weight:600">01</td>
-          <td>
-            <div class="ticker-badge">MU</div>
-            <div class="company-name">Micron Technology</div>
-          </td>
-          <td style="font-weight:500">~$1,050</td>
-          <td class="green">$1,300</td>
-          <td class="green" style="font-weight:600">+24%</td>
-          <td><span class="rating-pill r-buy">Strong Buy</span></td>
-          <td>
-            <span class="tag tag-g">AI Memory</span>
-            <span class="tag tag-b">Earnings Beat</span>
-          </td>
-        </tr>
-        <tr>
-          <td style="color:#3fb950;font-weight:600">02</td>
-          <td>
-            <div class="ticker-badge">NVDA</div>
-            <div class="company-name">NVIDIA Corporation</div>
-          </td>
-          <td style="font-weight:500">~$199</td>
-          <td class="green">$299</td>
-          <td class="green" style="font-weight:600">+50%</td>
-          <td><span class="rating-pill r-buy">Strong Buy</span></td>
-          <td>
-            <span class="tag tag-g">AI Chips</span>
-            <span class="tag tag-y">Pullback</span>
-          </td>
-        </tr>
-        <tr>
-          <td style="color:#3fb950;font-weight:600">03</td>
-          <td>
-            <div class="ticker-badge">CRWD</div>
-            <div class="company-name">CrowdStrike Holdings</div>
-          </td>
-          <td style="font-weight:500">~$680</td>
-          <td class="green">$825</td>
-          <td class="green" style="font-weight:600">+21%</td>
-          <td><span class="rating-pill r-buy">Strong Buy</span></td>
-          <td>
-            <span class="tag tag-g">Cybersecurity</span>
-            <span class="tag tag-b">Split 4:1</span>
-          </td>
-        </tr>
-        <tr>
-          <td style="color:#58a6ff;font-weight:600">04</td>
-          <td>
-            <div class="ticker-badge">ISRG</div>
-            <div class="company-name">Intuitive Surgical</div>
-          </td>
-          <td style="font-weight:500">~$403</td>
-          <td class="blue">$520+</td>
-          <td class="blue" style="font-weight:600">+15%</td>
-          <td><span class="rating-pill r-buy">Buy</span></td>
-          <td>
-            <span class="tag tag-b">Medical Tech</span>
-            <span class="tag tag-g">80% Market Share</span>
-          </td>
-        </tr>
-        <tr>
-          <td style="color:#d29922;font-weight:600">05</td>
-          <td>
-            <div class="ticker-badge">LULU</div>
-            <div class="company-name">Lululemon Athletica</div>
-          </td>
-          <td style="font-weight:500">~$173</td>
-          <td class="yellow">$133–149</td>
-          <td class="green" style="font-weight:600">+19%</td>
-          <td><span class="rating-pill r-hold">Hold</span></td>
-          <td>
-            <span class="tag tag-r">ลง 50%</span>
-            <span class="tag tag-y">P/E 9.5x ถูก</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="sec-title" style="margin-bottom:12px">Sector Strength สัปดาห์นี้</div>
-  <div class="chart-box">
-    <div class="sector-item">
-      <div class="sector-name">AI / Semiconductors</div>
-      <div class="sector-bar-bg"><div class="sector-bar-fill" style="width:90%;background:#3fb950"></div></div>
-      <div class="sector-status green">🔥 Very Hot</div>
+  <div class="sector-bar">
+    <div class="chart-title" style="font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Sector Strength สัปดาห์นี้</div>
+    <div class="sbar-row">
+      <div class="sbar-name">AI / Chips</div>
+      <div class="sbar-bg"><div class="sbar-fill" style="width:90%;background:#3fb950"></div></div>
+      <div class="sbar-val" style="color:#3fb950">🔥 Very Hot</div>
     </div>
-    <div class="sector-item">
-      <div class="sector-name">Cybersecurity</div>
-      <div class="sector-bar-bg"><div class="sector-bar-fill" style="width:75%;background:#3fb950"></div></div>
-      <div class="sector-status green">🟢 Strong</div>
+    <div class="sbar-row">
+      <div class="sbar-name">Cybersecurity</div>
+      <div class="sbar-bg"><div class="sbar-fill" style="width:75%;background:#3fb950"></div></div>
+      <div class="sbar-val" style="color:#3fb950">🟢 Strong</div>
     </div>
-    <div class="sector-item">
-      <div class="sector-name">Medical Devices</div>
-      <div class="sector-bar-bg"><div class="sector-bar-fill" style="width:60%;background:#58a6ff"></div></div>
-      <div class="sector-status blue">🔵 Stable</div>
+    <div class="sbar-row">
+      <div class="sbar-name">Medical Tech</div>
+      <div class="sbar-bg"><div class="sbar-fill" style="width:60%;background:#58a6ff"></div></div>
+      <div class="sbar-val" style="color:#58a6ff">🔵 Stable</div>
     </div>
-    <div class="sector-item">
-      <div class="sector-name">Consumer Retail</div>
-      <div class="sector-bar-bg"><div class="sector-bar-fill" style="width:28%;background:#d29922"></div></div>
-      <div class="sector-status yellow">⚠️ Weak</div>
-    </div>
-    <div class="sector-item" style="margin-bottom:0">
-      <div class="sector-name">Energy / Oil</div>
-      <div class="sector-bar-bg"><div class="sector-bar-fill" style="width:35%;background:#f85149"></div></div>
-      <div class="sector-status red">📉 Declining</div>
+    <div class="sbar-row">
+      <div class="sbar-name">Consumer</div>
+      <div class="sbar-bg"><div class="sbar-fill" style="width:30%;background:#d29922"></div></div>
+      <div class="sbar-val" style="color:#d29922">⚠️ Weak</div>
     </div>
   </div>
 
-  <div style="background:#161b22;border:0.5px solid #30363d;border-radius:10px;padding:14px;margin-top:4px">
-    <div class="chart-label" style="margin-bottom:10px">ภาพรวมตลาด US สัปดาห์นี้</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:12px">
-      <div><div style="color:#8b949e;font-size:10px;margin-bottom:3px">S&P 500</div><div class="green">25,888 ▲ +0.31%</div></div>
-      <div><div style="color:#8b949e;font-size:10px;margin-bottom:3px">NASDAQ</div><div class="green">▲ +27% YoY</div></div>
-      <div><div style="color:#8b949e;font-size:10px;margin-bottom:3px">VIX</div><div class="green">17.68 ↓ ลดลง</div></div>
-      <div><div style="color:#8b949e;font-size:10px;margin-bottom:3px">Gold</div><div class="green">$4,238 ▲ +3%</div></div>
-      <div><div style="color:#8b949e;font-size:10px;margin-bottom:3px">Bitcoin</div><div class="green">$64,180 ▲ +1.6%</div></div>
-      <div><div style="color:#8b949e;font-size:10px;margin-bottom:3px">Crude Oil</div><div class="red">$84.88 ▼ -3.2%</div></div>
-    </div>
-  </div>
-
-  <div class="disclaimer">
-    ⚠️ ข้อมูลรวบรวมจาก Analyst Consensus ณ 24–25 มิ.ย. 2026 · เพื่อการศึกษาเท่านั้น ไม่ใช่คำแนะนำการลงทุน · ราคาหุ้น US ส่วนใหญ่สูงกว่า 5,000 บาท — พิจารณา ETF หรือ Fractional Shares
+  <div class="footer-note">
+    ⚠️ ข้อมูลนี้รวบรวมจาก Analyst Consensus ณ 24–25 มิ.ย. 2026 · เพื่อการศึกษาเท่านั้น ไม่ใช่คำแนะนำการลงทุน · ราคาหุ้น US ต้องการเงินมากกว่า 5,000 บาท — พิจารณา ETF หรือ Fractional Shares ผ่านโบรกเกอร์ที่รองรับ
   </div>
 </div>
-
-<footer>
-  📊 Stock Dashboard by boyphuwit · ข้อมูล ณ 25 มิ.ย. 2026 · ไม่ใช่คำแนะนำทางการเงิน
-</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-function switchTab(tab) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + tab).classList.add('active');
-  event.target.classList.add('active');
-}
-
-const gridColor = 'rgba(48,54,61,0.7)';
-const tickColor = '#8b949e';
-
-// AAPL Price Chart
-new Chart(document.getElementById('aaplPriceChart'), {
-  type: 'line',
-  data: {
-    labels: ['8/6','9/6','10/6','11/6','12/6','13/6','16/6','17/6','18/6','19/6','20/6','23/6','24/6','25/6'],
-    datasets: [
-      { label: 'AAPL', data: [316,314,292,287,289,291,298,301,303,302,299,297,298,298], borderColor: '#3fb950', backgroundColor: 'rgba(63,185,80,0.07)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#3fb950', borderWidth: 2 },
-      { label: 'MA 50', data: [300,300,299,298,298,298,297,297,297,297,297,297,297,298], borderColor: '#d29922', borderDash: [5,3], pointRadius: 0, borderWidth: 1.5, fill: false },
-      { label: 'MA 200', data: [295,295,295,294,294,294,295,295,295,295,295,294,294,295], borderColor: '#58a6ff', borderDash: [2,4], pointRadius: 0, borderWidth: 1.5, fill: false }
-    ]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: {
-      legend: { display: true, labels: { color: '#8b949e', font: { size: 11 }, boxWidth: 20, padding: 16 } }
-    },
-    scales: {
-      x: { ticks: { color: tickColor, font: { size: 10 } }, grid: { color: gridColor } },
-      y: { ticks: { color: tickColor, font: { size: 10 }, callback: v => '$' + v }, grid: { color: gridColor }, min: 280, max: 320 }
-    }
-  }
-});
-
-// AAPL Revenue Chart
-new Chart(document.getElementById('aaplRevChart'), {
-  type: 'bar',
-  data: {
-    labels: ['iPhone','Services','Mac','iPad','Wearables'],
-    datasets: [{ data: [67.7, 31.0, 8.4, 8.1, 5.9], backgroundColor: ['#3fb950','#58a6ff','#d29922','#a371f7','#f85149'], borderRadius: 5, borderSkipped: false }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { ticks: { color: tickColor, font: { size: 11 } }, grid: { display: false } },
-      y: { ticks: { color: tickColor, font: { size: 10 }, callback: v => '$' + v + 'B' }, grid: { color: gridColor } }
-    }
-  }
-});
-
-// Upside Chart
-new Chart(document.getElementById('upsideChart'), {
-  type: 'bar',
-  data: {
-    labels: ['MU\nMicron', 'NVDA\nNVIDIA', 'CRWD\nCrowdStrike', 'ISRG\nIntuitive', 'LULU\nLululemon'],
-    datasets: [{
-      label: 'Upside %',
-      data: [24, 50, 21, 15, 19],
-      backgroundColor: ['#3fb950','#3fb950','#3fb950','#58a6ff','#d29922'],
-      borderRadius: 5, borderSkipped: false
+new Chart(document.getElementById('upsideChart'),{
+  type:'bar',
+  data:{
+    labels:['MU','NVDA','CRWD','ISRG','LULU'],
+    datasets:[{
+      label:'Upside %',
+      data:[28,50,21,15,19],
+      backgroundColor:['#3fb950','#3fb950','#3fb950','#58a6ff','#d29922'],
+      borderRadius:5,
+      borderSkipped:false
     }]
   },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: { callbacks: { label: ctx => '+' + ctx.raw + '% upside' } }
-    },
-    scales: {
-      x: { ticks: { color: tickColor, font: { size: 11 } }, grid: { display: false } },
-      y: { ticks: { color: tickColor, font: { size: 10 }, callback: v => '+' + v + '%' }, grid: { color: gridColor }, min: 0, max: 60 }
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{ticks:{color:'#8b949e',font:{size:12}},grid:{display:false}},
+      y:{ticks:{color:'#8b949e',font:{size:11},callback:v=>'+'+v+'%'},grid:{color:'rgba(48,54,61,0.6)'},min:0,max:60}
     }
   }
 });
 </script>
-</body>
-</html>
